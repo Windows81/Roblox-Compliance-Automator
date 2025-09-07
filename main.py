@@ -1,4 +1,5 @@
 from collections import deque
+import functools
 import requests
 import json
 import os
@@ -10,7 +11,8 @@ def answer_question(q_dict: dict) -> int:
     return 0
 
 
-def answer_questions(q_iden: str) -> list[(str, str)]:
+@functools.cache
+def answer_questions(q_iden: str) -> list[tuple[str, str]]:
     http_response = requests.get(
         'https://apis.roblox.com/experience-questionnaire/v1/questionnaires/%s' % q_iden,
     ).json()
@@ -31,6 +33,7 @@ def answer_questions(q_iden: str) -> list[(str, str)]:
     return responses
 
 
+@functools.cache
 def get_csrf():
     return requests.put(
         'https://apis.roblox.com/experience-questionnaire/v1/responses/1818/submissions',
@@ -54,14 +57,19 @@ def process(place_iden: int):
             ]
         }
     }
-    print(get_csrf())
-    return requests.put(
+    return requests.post(
         'https://apis.roblox.com/experience-questionnaire/v1/responses/%d/submissions' % place_iden,
         cookies=COOKIES,
         headers={'x-csrf-token': get_csrf()},
         json=payload,
-    ).text
+    )
 
 
 if __name__ == '__main__':
-    print(process(int(input("Enter place iden: "))))
+    text = input("Enter universe iden(s), separated by commas: ")
+    idens = [
+        int(t.strip())
+        for t in text.split(',')
+    ]
+    for iden in idens:
+        print(process(iden))
