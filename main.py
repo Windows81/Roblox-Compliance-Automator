@@ -12,15 +12,20 @@ def answer_question(q_dict: dict) -> int:
 
 
 @functools.cache
-def answer_questions(q_iden: str) -> list[tuple[str, str]]:
+def get_questions(q_iden: str) -> list[dict]:
     http_response = requests.get(
         'https://apis.roblox.com/experience-questionnaire/v1/questionnaires/%s' % q_iden,
     ).json()
-    questions = [
+    return [
         question
         for section in http_response['questionnaire']['sections']
         for question in section['questions']
     ]
+
+
+@functools.cache
+def answer_questions(q_iden: str) -> list[tuple[str, str]]:
+    questions = get_questions(q_iden)
 
     responses = []
     child_questions = deque(questions)
