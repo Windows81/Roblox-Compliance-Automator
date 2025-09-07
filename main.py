@@ -1,0 +1,67 @@
+from collections import deque
+import requests
+import json
+import os
+
+COOKIES = {'.ROBLOSECURITY': os.environ.get('ROBLOSECURITY', '')}
+
+
+def answer_question(q_dict: dict) -> int:
+    return 0
+
+
+def answer_questions(q_iden: str) -> list[(str, str)]:
+    http_response = requests.get(
+        'https://apis.roblox.com/experience-questionnaire/v1/questionnaires/%s' % q_iden,
+    ).json()
+    questions = [
+        question
+        for section in http_response['questionnaire']['sections']
+        for question in section['questions']
+    ]
+
+    responses = []
+    child_questions = deque(questions)
+    while len(child_questions) > 0:
+        question = child_questions.popleft()
+        option_index = answer_question(question)
+        option = question['options'][option_index]
+        responses.append((question['id'], option['id']))
+        child_questions.extendleft(option['childQuestions'])
+    return responses
+
+
+def get_csrf():
+    return requests.put(
+        'https://apis.roblox.com/experience-questionnaire/v1/responses/1818/submissions',
+        cookies=COOKIES,
+    ).headers.get('x-csrf-token', None)
+
+
+def process(place_iden: int):
+    q_response = requests.get(
+        'https://apis.roblox.com/experience-questionnaire/v1/questionnaires/%d/latest' % place_iden,
+        cookies=COOKIES,
+    )
+    q_iden: str = q_response.json()['questionnaireId']
+    responses = answer_questions(q_iden)
+    payload = {
+        'questionnaireId': q_iden,
+        'response': {
+            'answers': [
+                {'questionId': q, "value": r'"%s"' % r}
+                for (q, r) in responses
+            ]
+        }
+    }
+    print(get_csrf())
+    return requests.put(
+        'https://apis.roblox.com/experience-questionnaire/v1/responses/%d/submissions' % place_iden,
+        cookies=COOKIES,
+        headers={'x-csrf-token': get_csrf()},
+        json=payload,
+    ).text
+
+
+if __name__ == '__main__':
+    print(process(int(input("Enter place iden: "))))
