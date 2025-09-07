@@ -72,4 +72,5 @@ if __name__ == '__main__':
         for t in text.split(',')
     ]
     for iden in idens:
-        print(process(iden))
+        result = process(iden)
+        print('%17d - %s' % (iden, result))
