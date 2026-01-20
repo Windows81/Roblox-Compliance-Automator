@@ -7,7 +7,7 @@ You will need:
 2. Python's `requests` library, and
 3. A valid ROBLOSECURITY cookie set as an environment variable named `ROBLOSECURITY`
 
-If you're on Powershell, you can replace `...` with your cookie value and do:
+If you're on PowerShell, you can replace `...` with your cookie value and do:
 ```ps1
 pip3 install requests
 $env:ROBLOSECURITY = "..."
